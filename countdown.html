@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Countdown</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{box-sizing:border-box;--dim:#777}
+html,body{height:100%;margin:0}
+body{background:#000;color:#fff;font-family:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+.wrap{display:flex;gap:clamp(12px,4vw,56px);padding:0 16px}
+.unit{text-align:center;min-width:0}
+.num{font-weight:900;font-size:clamp(56px,17vw,200px);line-height:.9;font-variant-numeric:tabular-nums}
+.lbl{color:var(--dim);font-weight:700;font-size:clamp(14px,3vw,26px);margin-top:8px}
+.end{color:var(--dim);font-weight:700;font-size:clamp(14px,2.5vw,22px);margin-top:40px;text-align:center;padding:0 16px}
+@media (max-width:480px){.wrap{flex-wrap:wrap;justify-content:center;max-width:320px}.unit{flex:0 0 40%}.num{font-size:88px}}
+#party{display:none;flex-direction:column;align-items:center;text-align:center;padding:0 16px;position:relative;z-index:2}
+body.done #count{display:none}
+body.done #party{display:flex}
+#party h1{font-weight:900;font-size:clamp(56px,14vw,170px);line-height:.95;margin:0}
+#party p{color:var(--dim);font-weight:700;font-size:clamp(16px,3vw,26px);margin:16px 0 28px}
+.letter{background:none;border:0;cursor:pointer;padding:0;animation:bob 2s ease-in-out infinite}
+.letter svg{width:clamp(110px,26vw,170px);height:auto;display:block}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.letter:focus-visible,.close:focus-visible{outline:3px solid #fff;outline-offset:6px}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:5;padding:16px;box-sizing:border-box}
+#modal.open{display:flex}
+.paper{background:#f6efe0;color:#2a2116;max-width:560px;width:100%;max-height:88%;overflow:auto;border-radius:6px;padding:28px 26px;font-family:Caveat,"Segoe Script",cursive;font-size:clamp(21px,4.6vw,27px);line-height:1.35;box-sizing:border-box;animation:pop .35s ease-out}
+.paper p{margin:0 0 14px}
+.paper .t{font-weight:700;font-size:1.25em}
+.close{margin-top:6px;background:#2a2116;color:#f6efe0;border:0;border-radius:999px;padding:8px 22px;font:700 20px Caveat,cursive;cursor:pointer}
+@keyframes pop{from{transform:scale(.85) translateY(20px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.letter,.paper{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div id="count">
+  <main class="wrap">
+    <div class="unit"><div class="num" id="d">00</div><div class="lbl">days</div></div>
+    <div class="unit"><div class="num" id="h">00</div><div class="lbl">hours</div></div>
+    <div class="unit"><div class="num" id="m">00</div><div class="lbl">minutes</div></div>
+    <div class="unit"><div class="num" id="s">00</div><div class="lbl">seconds</div></div>
+  </main>
+  <div class="end">Ends 30 September 2026</div>
+</div>
+<section id="party">
+  <h1>Happy Birthday!</h1>
+  <p>Tap the letter</p>
+  <button class="letter" id="open" aria-label="Open the letter">
+    <svg viewBox="0 0 120 84" aria-hidden="true"><rect x="2" y="2" width="116" height="80" rx="6" fill="#f6efe0"/><path d="M2 8 L60 50 L118 8" fill="none" stroke="#b9a883" stroke-width="3"/><path d="M2 80 L46 40 M118 80 L74 40" stroke="#b9a883" stroke-width="3" fill="none"/><circle cx="60" cy="50" r="9" fill="#b3261e"/></svg>
+  </button>
+</section>
+<div id="modal" role="dialog" aria-modal="true" aria-label="Birthday letter">
+  <div class="paper">
+    <p class="t">Happy birthday bro...</p>
+    <p>You're my best friend from my Type Soul days, and honestly those were some of the best times. Running Veyros together, grinding it out, laughing at the dumbest stuff... I wouldn't trade that for anything.</p>
+    <p>We've gone through some stuff together, and every single time we figured it out. Sometimes we're just quiet and don't speak up to each other, but that's okay. Even in the silence, I know you're there and you know I'm here.</p>
+    <p>Keep going, bro. When things feel heavy or the grind feels endless, remember how many times you've already gotten through things you thought you couldn't. You're stronger than you think, and you've got so much ahead of you. Take it one step at a time, and never forget you don't have to do it alone.</p>
+    <p>Here's to another year. Keep going, I believe in you.</p>
+    <button class="close" id="close">Close</button>
+  </div>
+</div>
+<script>
+const target=new Date("2026-09-30T18:02:00+07:00").getTime();
+const $=id=>document.getElementById(id), p=n=>String(n).padStart(2,"0");
+let celebrated=false, timer;
+function tick(){
+  const t=Math.max(0,Math.floor((target-Date.now())/1000));
+  if(t===0||location.hash==="#birthday"){celebrate();return}
+  $("d").textContent=p(Math.floor(t/86400));
+  $("h").textContent=p(Math.floor(t%86400/3600));
+  $("m").textContent=p(Math.floor(t%3600/60));
+  $("s").textContent=p(t%60);
+}
+function celebrate(){
+  if(celebrated)return; celebrated=true; clearInterval(timer);
+  document.body.classList.add("done"); startConfetti();
+}
+tick(); if(!celebrated) timer=setInterval(tick,1000);
+
+$("open").onclick=()=>{$("modal").classList.add("open");$("close").focus()};
+$("close").onclick=()=>$("modal").classList.remove("open");
+$("modal").onclick=e=>{if(e.target===$("modal"))$("modal").classList.remove("open")};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")$("modal").classList.remove("open")});
+
+function startConfetti(){
+  const c=$("confetti"), x=c.getContext("2d");
+  const colors=["#ff3b5c","#ffd23f","#3bceac","#4d9de0","#e15fed","#ffffff"];
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  let W,H,pcs=[];
+  function size(){const r=devicePixelRatio||1;W=innerWidth;H=innerHeight;c.width=W*r;c.height=H*r;x.setTransform(r,0,0,r,0,0)}
+  size(); addEventListener("resize",size);
+  const make=(top)=>({x:Math.random()*W,y:top?-20:Math.random()*-H,w:6+Math.random()*7,h:10+Math.random()*8,vy:2+Math.random()*3.5,vx:-1+Math.random()*2,r:Math.random()*6.28,vr:-.15+Math.random()*.3,c:colors[Math.random()*colors.length|0],s:Math.random()*6.28});
+  for(let i=0;i<(reduce?40:180);i++)pcs.push(make(false));
+  (function frame(){
+    x.clearRect(0,0,W,H);
+    for(const q of pcs){
+      q.y+=q.vy; q.s+=.05; q.x+=q.vx+Math.sin(q.s)*.8; q.r+=q.vr;
+      if(q.y>H+20)Object.assign(q,make(true));
+      x.save();x.translate(q.x,q.y);x.rotate(q.r);x.scale(1,Math.cos(q.s));
+      x.fillStyle=q.c;x.fillRect(-q.w/2,-q.h/2,q.w,q.h);x.restore();
+    }
+    requestAnimationFrame(frame);
+  })();
+}
+</script>
+</body>
+</html>
